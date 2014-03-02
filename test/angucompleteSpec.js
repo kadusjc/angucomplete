@@ -120,6 +120,25 @@ describe('angucomplete', function() {
       expect(element.isolateScope().results[0].description).toBe(description);
     });
 
+    it('should set $scope.results[0].description to more than one level deep attribute', function() {
+      var element = angular.element('<div angucomplete id="ex1" placeholder="Search names" selectedobject="selected" localdata="names" searchfields="name" titlefield="name" descriptionfield="desc.short" minlength="1"/>');
+      $compile(element)($scope);
+      $scope.$digest();
+
+      var desc = 'short desc...';
+      var responseData = [
+        {
+          name: 'John',
+          desc: {
+            long: 'very very long description...',
+            short: desc
+          }
+        }
+      ];
+      element.isolateScope().processResults(responseData);
+      expect(element.isolateScope().results[0].description).toBe(desc);
+    });
+
     it('should set $scope.results[0].image', function() {
       var element = angular.element('<div angucomplete id="ex1" placeholder="Search names" selectedobject="selected" localdata="names" searchfields="name" titlefield="name" imagefield="pic" minlength="1"/>');
       $compile(element)($scope);
@@ -127,6 +146,26 @@ describe('angucomplete', function() {
 
       var image = 'some pic';
       var responseData = [ {name: 'John', pic: image} ];
+      element.isolateScope().processResults(responseData);
+      expect(element.isolateScope().results[0].image).toBe(image);
+    });
+
+    it('should set $scope.results[0].image to more than one level deep attribute', function() {
+      var element = angular.element('<div angucomplete id="ex1" placeholder="Search names" selectedobject="selected" localdata="names" searchfields="name" titlefield="name" imagefield="pic.small" minlength="1"/>');
+      $compile(element)($scope);
+      $scope.$digest();
+
+      var image = 'small pic';
+      var responseData = [
+        {
+          name: 'John',
+          pic: {
+            large: 'large pic',
+            mid: 'medium pic',
+            small: image
+          }
+        }
+      ];
       element.isolateScope().processResults(responseData);
       expect(element.isolateScope().results[0].image).toBe(image);
     });
@@ -184,6 +223,35 @@ describe('angucomplete', function() {
         $httpBackend.verifyNoOutstandingExpectation();
         $httpBackend.verifyNoOutstandingRequest();
         expect(element.isolateScope().processResults).toHaveBeenCalledWith(results.data, queryTerm);
+        expect(element.isolateScope().searching).toBe(false);
+      }));
+
+      it('should call $scope.processResults with more than one level deep of data attribute', inject(function($httpBackend) {
+        var element = angular.element('<div angucomplete id="ex1" placeholder="Search names" selectedobject="selected" url="names?q=" searchfields="name" datafield="search.data" titlefield="name" minlength="1"/>');
+        $compile(element)($scope);
+        $scope.$digest();
+
+        var queryTerm = 'john';
+        var results = {
+          meta: {
+            offset: 0,
+            total: 1
+          },
+          search: {
+            seq_id: 1234567890,
+            data: [
+              {name: 'john'}
+            ]
+          }
+        };
+        spyOn(element.isolateScope(), 'processResults');
+        $httpBackend.expectGET('names?q=' + queryTerm).respond(200, results);
+        element.isolateScope().searchTimerComplete(queryTerm);
+        $httpBackend.flush();
+        $httpBackend.verifyNoOutstandingExpectation();
+        $httpBackend.verifyNoOutstandingRequest();
+        expect(element.isolateScope().processResults).toHaveBeenCalledWith(results.search.data, queryTerm);
+        expect(element.isolateScope().processResults.mostRecentCall.args[0]).toEqual(results.search.data);
         expect(element.isolateScope().searching).toBe(false);
       }));
     });

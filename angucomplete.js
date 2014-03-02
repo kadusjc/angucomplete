@@ -36,6 +36,15 @@ angular.module('angucomplete', [] )
             $scope.minLength = 3;
             $scope.searchStr = null;
 
+            extractValue = function(obj, key) {
+                if (key) {
+                    value = eval('obj.' + key);
+                } else {
+                    value = obj;
+                }
+                return value;
+            }
+
             if ($scope.minLengthUser && $scope.minLengthUser != "") {
                 $scope.minLength = $scope.minLengthUser;
             }
@@ -67,12 +76,12 @@ angular.module('angucomplete', [] )
 
                         var description = "";
                         if ($scope.descriptionField) {
-                            description = responseData[i][$scope.descriptionField];
+                            description = extractValue(responseData[i], $scope.descriptionField);
                         }
 
                         var image = "";
                         if ($scope.imageField) {
-                            image = responseData[i][$scope.imageField];
+                            image = extractValue(responseData[i], $scope.imageField);
                         }
 
                         var text = titleCode.join(' ');
@@ -126,7 +135,8 @@ angular.module('angucomplete', [] )
                         $http.get($scope.url + str, {}).
                             success(function(responseData, status, headers, config) {
                                 $scope.searching = false;
-                                $scope.processResults(responseData[$scope.dataField], str);
+                                data = extractValue(responseData, $scope.dataField)
+                                $scope.processResults(data, str);
                             }).
                             error(function(data, status, headers, config) {
                                 console.log("error");
